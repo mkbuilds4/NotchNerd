@@ -2,7 +2,7 @@
 //  AgentView.swift
 //  NotchNerd — Agent panel UI
 //
-//  The expanded-notch "Agent" tab: live Claude Code sessions with an overview
+//  The expanded-notch "Agent" tab: live Claude Code and Cursor sessions with an overview
 //  row, expandable subagent/task detail, Allow/Deny on permission prompts,
 //  answer buttons on questions, usage chips, and a Ghostty jump button.
 //  Binds to AgentBridgeManager.shared + AgentUsageManager.shared.
@@ -41,7 +41,7 @@ struct AgentView: View {
     private var header: some View {
         HStack(spacing: 6) {
             Image(systemName: "sparkles").foregroundStyle(.purple)
-            Text("Claude Code").font(.headline)
+            Text("Agents").font(.headline)
             Spacer()
             if Defaults[.agentUsageEnabled], let snap = usage.snapshot {
                 if let fiveHour = snap.fiveHour { UsageChip(label: "5h", window: fiveHour) }
@@ -77,18 +77,22 @@ struct AgentView: View {
     }
 
     @ViewBuilder private var statusChip: some View {
-        switch agent.hookInstallState {
-        case .installed:
+        let claudeOn = agent.hookInstallState == .installed
+        let cursorOn = agent.cursorHookInstallState == .installed
+        if claudeOn && cursorOn {
             Label("Hooks on", systemImage: "checkmark.seal.fill")
                 .labelStyle(.titleAndIcon).font(.caption2).foregroundStyle(.green)
-        case .notInstalled, .unknown:
+        } else if case let .failed(message) = agent.hookInstallState, !claudeOn {
+            Label("Hook error", systemImage: "exclamationmark.triangle.fill")
+                .font(.caption2).foregroundStyle(.orange).help(message)
+        } else if case let .failed(message) = agent.cursorHookInstallState, !cursorOn {
+            Label("Hook error", systemImage: "exclamationmark.triangle.fill")
+                .font(.caption2).foregroundStyle(.orange).help(message)
+        } else {
             Button { agent.installHooks() } label: {
                 Label("Install hooks", systemImage: "bolt.fill").font(.caption2)
             }
             .buttonStyle(.borderless).tint(.purple)
-        case let .failed(message):
-            Label("Hook error", systemImage: "exclamationmark.triangle.fill")
-                .font(.caption2).foregroundStyle(.orange).help(message)
         }
     }
 
@@ -96,7 +100,7 @@ struct AgentView: View {
         VStack(spacing: 4) {
             Spacer(minLength: 0)
             Image(systemName: "moon.zzz").font(.title3).foregroundStyle(.secondary)
-            Text("No active Claude Code sessions").font(.caption).foregroundStyle(.secondary)
+            Text("No active agent sessions").font(.caption).foregroundStyle(.secondary)
             if !agent.isBridgeReady && !agent.lastStatusMessage.isEmpty {
                 Text(agent.lastStatusMessage).font(.caption2).foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
@@ -124,7 +128,7 @@ struct AgentSessionRow: View {
                     color: AgentStatusPalette.tint(for: session.phase),
                     pulsing: session.phase == .running || session.phase.requiresAttention
                 )
-                Text(session.title.isEmpty ? "Claude Code" : session.title)
+                Text(session.title.isEmpty ? session.rowFallbackTitle : session.title)
                     .font(.subheadline).lineLimit(1)
                 Spacer(minLength: 4)
                 if let progress = session.taskProgress {
@@ -161,7 +165,7 @@ struct AgentSessionRow: View {
                         Image(systemName: "arrow.uturn.forward.square")
                     }
                     .buttonStyle(.plain)
-                    .help("Jump to the terminal")
+                    .help(session.tool == .cursor ? "Show Cursor" : "Jump to the terminal")
                 }
             }
             // Identity context — branch · terminal · model · mode — so same-repo sessions are distinct.
@@ -474,12 +478,23 @@ extension AgentSession {
         }
     }
 
+    /// Title used when the engine hasn't supplied one yet.
+    var rowFallbackTitle: String {
+        switch tool {
+        case .cursor: return "Cursor"
+        case .claudeCode: return "Claude Code"
+        default: return completionReplyRecipientName
+        }
+    }
+
     /// Compact identity context: branch · terminal · friendly model · non-default permission mode.
     var identityChips: [String] {
         var chips: [String] = []
         if let branch = spotlightWorktreeBranch { chips.append(branch) }
         if let terminal = spotlightTerminalBadge { chips.append(terminal) }
-        if let model = claudeMetadata?.model, !model.isEmpty { chips.append(Self.friendlyModelName(model)) }
+        if let model = claudeMetadata?.model ?? cursorMetadata?.model, !model.isEmpty {
+            chips.append(Self.friendlyModelName(model))
+        }
         if let mode = claudeMetadata?.permissionMode, let label = Self.permissionModeLabel(mode) {
             chips.append(label)
         }
@@ -618,19 +633,24 @@ struct AgentSettings: View {
     var body: some View {
         Form {
             Section {
-                Defaults.Toggle(key: .agentEnabled) { Text("Monitor Claude Code sessions") }
+                Defaults.Toggle(key: .agentEnabled) { Text("Monitor Claude Code and Cursor sessions") }
                 Defaults.Toggle(key: .agentPanelEnabled) { Text("Show the Agent tab in the notch") }
             } header: {
                 Text("Agent")
             } footer: {
-                Text("Watches Claude Code through its hooks. Local-only — NotchNerd never calls the Anthropic API and stores no credentials.")
+                Text("Watches Claude Code and Cursor through their local hooks. NotchNerd never calls an API and stores no credentials. Cursor shell and MCP approvals stay in Cursor — the notch only observes them.")
             }
 
             Section {
                 HStack {
-                    Text("Status")
+                    Text("Claude Code")
                     Spacer()
                     hookStatusLabel
+                }
+                HStack {
+                    Text("Cursor")
+                    Spacer()
+                    cursorHookStatusLabel
                 }
                 Defaults.Toggle(key: .agentAutoInstallHooks) { Text("Install hooks automatically on launch") }
                 HStack {
@@ -657,9 +677,9 @@ struct AgentSettings: View {
                     }
                 }
             } header: {
-                Text("Claude Code hooks")
+                Text("Hooks")
             } footer: {
-                Text("Adds managed entries to ~/.claude/settings.json so NotchNerd can show live session status and let you approve/deny permission prompts from the notch. Your settings are backed up first; fully reversible.")
+                Text("Install writes managed entries to ~/.claude/settings.json (approve/deny from the notch) and ~/.cursor/hooks.json (live Cursor agent status). Both files are backed up first. Cursor’s own permission prompts are left alone.")
             }
 
             Section {
@@ -726,7 +746,15 @@ struct AgentSettings: View {
     }
 
     @ViewBuilder private var hookStatusLabel: some View {
-        switch agent.hookInstallState {
+        AgentHookStatusLabel(state: agent.hookInstallState)
+    }
+
+    @ViewBuilder private var cursorHookStatusLabel: some View {
+        AgentHookStatusLabel(state: agent.cursorHookInstallState)
+    }
+
+    @ViewBuilder private var usageStatusLabel: some View {
+        switch usage.installState {
         case .installed:
             Label("Installed", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
         case .notInstalled:
@@ -738,9 +766,13 @@ struct AgentSettings: View {
                 .foregroundStyle(.orange).help(message)
         }
     }
+}
 
-    @ViewBuilder private var usageStatusLabel: some View {
-        switch usage.installState {
+private struct AgentHookStatusLabel: View {
+    let state: HookInstallState
+
+    var body: some View {
+        switch state {
         case .installed:
             Label("Installed", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
         case .notInstalled:

@@ -7,12 +7,13 @@
 //  AppModel/coordinators — it re-implements only the minimal happy path:
 //    • start BridgeServer in-process
 //    • observe AgentEvents via a LocalBridgeClient and reduce them into SessionState
-//    • install Claude Code hooks pointed at the embedded Contents/Helpers/OpenIslandHooks
-//    • round-trip permission approve/deny back to the blocked hook
+//    • install Claude Code + Cursor hooks pointed at the embedded Contents/Helpers/OpenIslandHooks
+//    • round-trip permission approve/deny back to the blocked Claude hook
 //    • startup discovery + process-liveness backstop + registry restore/persist
 //
-//  This feature only OBSERVES Claude Code via hooks. It never calls the Anthropic API and
-//  stores no credentials.
+//  This feature only OBSERVES Claude Code and Cursor via hooks. It never calls an API and
+//  stores no credentials. Cursor shell/MCP hooks are observe-only (the engine patch does not
+//  auto-allow them).
 //
 //  NAMESPACING (plan decision #8): for now this uses OpenIslandCore's default socket + managed
 //  paths, which makes the hook round-trip work out of the box (the installed hook command
@@ -74,6 +75,8 @@ final class AgentBridgeManager: ObservableObject {
 
     @Published private(set) var isBridgeReady: Bool = false
     @Published private(set) var hookInstallState: HookInstallState = .unknown
+    /// Cursor's `~/.cursor/hooks.json` managed-hook status. Independent of Claude's settings.json.
+    @Published private(set) var cursorHookInstallState: HookInstallState = .unknown
     /// Deep hook-integrity diagnostic (stale command path / non-executable binary / malformed config /
     /// other hooks present) — catches the failure the simple "managed hooks present" check can't. Drives
     /// the Settings repair affordance; nil until first checked.
@@ -101,7 +104,9 @@ final class AgentBridgeManager: ObservableObject {
     }
 
     private lazy var installManager = makeInstallManager()
+    private let cursorInstallManager = CursorHookInstallationManager()
     private let registry = ClaudeSessionRegistry()
+    private let cursorRegistry = CursorSessionRegistry()
     // Tight window: with the `isVisibleInIsland` publish filter + TTY/cwd liveness match below,
     // discovery's only remaining job is recovering a session that is *still running* but whose hooks
     // we missed (app launched after Claude) — not resurfacing 24h of cleared/finished history.
@@ -198,7 +203,7 @@ final class AgentBridgeManager: ObservableObject {
                 guard generation == self.connectionGeneration else { return }
                 self.isBridgeReady = true
                 self.reconnectDelay = Self.reconnectBaseDelay
-                self.lastStatusMessage = "Agent bridge ready. Watching Claude Code hooks."
+                self.lastStatusMessage = "Agent bridge ready. Watching Claude Code and Cursor hooks."
             } catch {
                 guard !Task.isCancelled, generation == self.connectionGeneration else { return }
                 self.isBridgeReady = false
@@ -244,7 +249,9 @@ final class AgentBridgeManager: ObservableObject {
         // the TTY/cwd process match in `startLivenessBackstop`. We deliberately do NOT revive a
         // session whose terminal already went away (`isSessionEnded`).
         let sid = Self.sessionID(of: event)
-        if let session = state.session(id: sid), session.tool == .claudeCode, !session.isSessionEnded {
+        if let session = state.session(id: sid),
+           (session.tool == .claudeCode || session.tool == .cursor),
+           !session.isSessionEnded {
             state.markSingleSessionAlive(sessionID: sid)
         }
         republish()
@@ -363,12 +370,17 @@ final class AgentBridgeManager: ObservableObject {
     func jump(sessionID: String) {
         guard let session = state.session(id: sessionID), let target = session.jumpTarget else { return }
         let appName = AgentTerminalJump.appName(for: target)
+        let isCursor = session.tool == .cursor
         Task.detached(priority: .userInitiated) { [weak self] in
             let ok = AgentTerminalJump.jump(to: target)
             await MainActor.run {
-                self?.lastStatusMessage = ok
-                    ? "Focused the \(appName) terminal."
-                    : "Couldn’t find the \(appName) terminal — it may have closed."
+                if isCursor {
+                    self?.lastStatusMessage = ok ? "Brought Cursor forward." : "Couldn’t find Cursor."
+                } else {
+                    self?.lastStatusMessage = ok
+                        ? "Focused the \(appName) terminal."
+                        : "Couldn’t find the \(appName) terminal — it may have closed."
+                }
             }
         }
     }
@@ -411,13 +423,17 @@ final class AgentBridgeManager: ObservableObject {
 
     func installHooks() {
         guard let source = embeddedHooksBinaryURL() else {
-            hookInstallState = .failed("Agent hook helper not found in the app bundle.")
-            lastStatusMessage = hookInstallStateMessage
+            let message = "Agent hook helper not found in the app bundle."
+            hookInstallState = .failed(message)
+            cursorHookInstallState = .failed(message)
+            lastStatusMessage = message
             return
         }
 
         Task { [weak self] in
             guard let self else { return }
+            var notes: [String] = []
+
             do {
                 // install() COPIES `source` → the managed bin location, backs up settings.json, and
                 // writes hooks pointing at the managed copy. Idempotent.
@@ -425,28 +441,57 @@ final class AgentBridgeManager: ObservableObject {
                     try installManager.install(hooksBinaryURL: source)
                 }.value
                 self.hookInstallState = status.managedHooksPresent ? .installed : .notInstalled
-                self.lastStatusMessage = "Claude Code hooks installed."
-                self.checkHookHealth()
+                notes.append(status.managedHooksPresent ? "Claude Code hooks installed." : "Claude Code hooks were not written.")
             } catch {
                 // Never destroy the user's settings.json; the installer already backed it up.
                 self.hookInstallState = .failed(error.localizedDescription)
-                self.lastStatusMessage = "Hook install failed: \(error.localizedDescription)"
+                notes.append("Claude Code hook install failed: \(error.localizedDescription)")
             }
+
+            do {
+                let status = try await Task.detached(priority: .userInitiated) { [cursorInstallManager = self.cursorInstallManager] in
+                    try cursorInstallManager.install(hooksBinaryURL: source)
+                }.value
+                self.cursorHookInstallState = status.managedHooksPresent ? .installed : .notInstalled
+                notes.append(status.managedHooksPresent ? "Cursor hooks installed." : "Cursor hooks were not written.")
+            } catch {
+                self.cursorHookInstallState = .failed(error.localizedDescription)
+                notes.append("Cursor hook install failed: \(error.localizedDescription)")
+            }
+
+            self.lastStatusMessage = notes.joined(separator: " ")
+            self.checkHookHealth()
         }
     }
 
     func uninstallHooks() {
         Task { [weak self] in
             guard let self else { return }
+            var notes: [String] = []
+
             do {
                 _ = try await Task.detached(priority: .userInitiated) { [installManager = self.installManager] in
                     try installManager.uninstall()
                 }.value
                 self.hookInstallState = .notInstalled
-                self.lastStatusMessage = "Claude Code hooks removed."
+                notes.append("Claude Code hooks removed.")
             } catch {
                 self.hookInstallState = .failed(error.localizedDescription)
+                notes.append("Claude Code hook removal failed: \(error.localizedDescription)")
             }
+
+            do {
+                _ = try await Task.detached(priority: .userInitiated) { [cursorInstallManager = self.cursorInstallManager] in
+                    try cursorInstallManager.uninstall()
+                }.value
+                self.cursorHookInstallState = .notInstalled
+                notes.append("Cursor hooks removed.")
+            } catch {
+                self.cursorHookInstallState = .failed(error.localizedDescription)
+                notes.append("Cursor hook removal failed: \(error.localizedDescription)")
+            }
+
+            self.lastStatusMessage = notes.joined(separator: " ")
         }
     }
 
@@ -460,6 +505,14 @@ final class AgentBridgeManager: ObservableObject {
                 self.hookInstallState = status.managedHooksPresent ? .installed : .notInstalled
             } catch {
                 self.hookInstallState = .unknown
+            }
+            do {
+                let status = try await Task.detached(priority: .utility) { [cursorInstallManager = self.cursorInstallManager] in
+                    try cursorInstallManager.status()
+                }.value
+                self.cursorHookInstallState = status.managedHooksPresent ? .installed : .notInstalled
+            } catch {
+                self.cursorHookInstallState = .unknown
             }
             self.checkHookHealth()
         }
@@ -493,15 +546,20 @@ final class AgentBridgeManager: ObservableObject {
     // MARK: - Startup discovery + liveness + registry
 
     private func restoreFromRegistry() {
+        var restored: [AgentSession] = []
         do {
-            let records = try registry.load()
-            let restored = records.map { $0.restorableSession }  // forces .stale
-            if !restored.isEmpty {
-                state = SessionState(sessions: restored)
-                republish()
-            }
+            restored.append(contentsOf: try registry.load().map(\.restorableSession))
         } catch {
-            lastStatusMessage = "Could not restore agent sessions: \(error.localizedDescription)"
+            lastStatusMessage = "Could not restore Claude Code sessions: \(error.localizedDescription)"
+        }
+        do {
+            restored.append(contentsOf: try cursorRegistry.load().map(\.restorableSession))
+        } catch {
+            lastStatusMessage = "Could not restore Cursor sessions: \(error.localizedDescription)"
+        }
+        if !restored.isEmpty {
+            state = SessionState(sessions: restored)
+            republish()
         }
     }
 
@@ -539,8 +597,8 @@ final class AgentBridgeManager: ObservableObject {
             let snapshots = ActiveAgentProcessDiscovery().discover()  // shells out to ps/lsof (off-actor)
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                let aliveClaudeIDs = self.aliveClaudeSessionIDs(from: snapshots)
-                let changed = self.state.markProcessLiveness(aliveSessionIDs: aliveClaudeIDs)
+                let aliveIDs = self.aliveSessionIDs(from: snapshots)
+                let changed = self.state.markProcessLiveness(aliveSessionIDs: aliveIDs)
                 // Also refresh while a session is running so the time-based `workingCount` updates
                 // (the "Claude working" indicator turns off ~recency-window after events stop).
                 if !changed.isEmpty || self.state.sessions.contains(where: { $0.phase == .running }) {
@@ -568,6 +626,46 @@ final class AgentBridgeManager: ObservableObject {
     /// so among sessions sharing a terminal we keep only the most-recently-updated one. The superseded
     /// (cleared) id then misses the alive set and is force-ended within ~6s — which is exactly what
     /// drops it from the Agent tab.
+    /// Claude TTY matches plus Cursor conversations that are still live inside the Cursor app.
+    ///
+    /// Cursor's agent has no terminal process to match. A hook-managed conversation would otherwise
+    /// be force-ended ~6s after the last event — including during a long silent generation. Keep a
+    /// running conversation alive while Cursor itself is running, and keep a just-finished turn
+    /// visible briefly so the "done" row doesn't vanish the instant `stop` fires.
+    private func aliveSessionIDs(
+        from snapshots: [ActiveAgentProcessDiscovery.ProcessSnapshot]
+    ) -> Set<String> {
+        aliveClaudeSessionIDs(from: snapshots).union(aliveCursorSessionIDs())
+    }
+
+    private static let cursorCompletedGrace: TimeInterval = 120
+    private static let cursorRunningSilenceCap: TimeInterval = 30 * 60
+
+    private func aliveCursorSessionIDs(now: Date = .now) -> Set<String> {
+        guard Self.cursorAppIsRunning() else { return [] }
+        var ids = Set<String>()
+        for session in state.sessions where session.tool == .cursor && !session.isSessionEnded {
+            let age = now.timeIntervalSince(session.updatedAt)
+            if session.phase == .running, age < Self.cursorRunningSilenceCap {
+                ids.insert(session.id)
+            } else if session.phase == .completed, age < Self.cursorCompletedGrace {
+                ids.insert(session.id)
+            }
+        }
+        return ids
+    }
+
+    /// Cursor's bundle id, plus a name match so a renamed/nightly build still counts as alive.
+    private static func cursorAppIsRunning() -> Bool {
+        let bundleID = "com.todesktop.230313mzl4w4u92"
+        if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
+            return true
+        }
+        return NSWorkspace.shared.runningApplications.contains { app in
+            app.localizedName?.caseInsensitiveCompare("Cursor") == .orderedSame
+        }
+    }
+
     private func aliveClaudeSessionIDs(
         from snapshots: [ActiveAgentProcessDiscovery.ProcessSnapshot]
     ) -> Set<String> {
@@ -622,13 +720,17 @@ final class AgentBridgeManager: ObservableObject {
     }
 
     private func persistRegistryNow() {
-        let records = state.sessions
+        let claudeRecords = state.sessions
             // Persist only what's currently live, so a relaunch doesn't re-seed cleared/finished
             // sessions (they'd be filtered out of the UI anyway, but this keeps the registry clean).
             .filter { $0.tool == .claudeCode && $0.origin != .demo && $0.isVisibleInIsland }
             .map { ClaudeTrackedSessionRecord(session: $0) }
-        Task.detached(priority: .utility) { [registry] in
-            try? registry.save(records)
+        let cursorRecords = state.sessions
+            .filter { $0.tool == .cursor && $0.origin != .demo && $0.isVisibleInIsland }
+            .map { CursorTrackedSessionRecord(session: $0) }
+        Task.detached(priority: .utility) { [registry, cursorRegistry] in
+            try? registry.save(claudeRecords)
+            try? cursorRegistry.save(cursorRecords)
         }
     }
 }

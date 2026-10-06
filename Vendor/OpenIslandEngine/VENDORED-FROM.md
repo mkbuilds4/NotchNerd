@@ -11,6 +11,7 @@
 ## NotchNerd patches (re-apply after a re-pull)
 
 - **`QuestionOption.preview`** — `Sources/OpenIslandCore/AgentSession.swift`: added `public var preview: String?` to `QuestionOption` (+ init param). `Sources/OpenIslandCore/ClaudeHooks.swift`: in the `questionPrompt` parser, populate it from `optionObject["preview"]?.stringValue`. **Why:** AskUserQuestion options can carry an ASCII/code `preview`; upstream drops it, so the Agent tab's question card couldn't show it. Backward-compatible (Optional → `decodeIfPresent`). Marked inline with `// NotchNerd patch`.
+- **Cursor observe-only hooks** — `Sources/OpenIslandCore/BridgeServer.swift` `handleCursorHook`: `beforeShellExecution` and `beforeMCPExecution` reply `.acknowledged` (no stdout directive) instead of `CursorHookDirective(permission: .allow)`. **Why:** `allow` skips Cursor's own approval prompt. NotchNerd only watches those events. Marked inline with `// NotchNerd patch`.
 
 ## Re-pulling upstream
 ```sh
