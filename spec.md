@@ -153,7 +153,9 @@ NotchNerd/                          repo root
   pulsing per-phase status dots, **expandable session rows** (live subagents + task/todo checklists
   from `ClaudeSessionMetadata`), Allow Once/Deny permission cards, question option buttons, and a
   terminal jump button (already-focused short-circuit + live re-resolution; Ghostty **or**
-  Terminal.app via the `AgentTerminalJump` dispatcher). **In-notch notification mode** auto-pops the
+  Terminal.app via the `AgentTerminalJump` dispatcher; Cursor sessions activate the Cursor app).
+  Cursor is observe-only: `~/.cursor/hooks.json` feeds the same list, and shell/MCP approvals stay
+  in Cursor. **In-notch notification mode** auto-pops the
   notch on permission/question/completion events (never hijacks an open notch; frontmost-suppression;
   completion auto-collapses after 10s) with optional **system-sound** alerts. **Usage HUD** chips
   (5h/7d Claude quotas) via a vendored statusline wrapper. **Closed-notch Claude status:**
