@@ -1561,7 +1561,7 @@
 			repositoryURL = "https://github.com/mkbuilds4/presence-lock.git";
 			requirement = {
 				kind = revision;
-				revision = f5c6aa80057d49bcfc1acf3889707604b924a2b2;
+				revision = 93302fd16aafcecf623261a75373f3563d6bbe19;
 			};
 		};
 		9A987A0E2C73CA8D005CA465 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
