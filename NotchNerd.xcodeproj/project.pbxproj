@@ -1390,6 +1390,8 @@
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses the calendar to display your calendar events";
 				INFOPLIST_KEY_NSCameraUsageDescription = "NotchNerd uses the camera for the webcam mirror and, if you turn on Guard, to check for your face while you are idle. Guard never saves frames unless someone else is at your Mac.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "NotchNerd Guard can relax at places you save (like home) and tighten everywhere else. Your location never leaves this Mac.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "NotchNerd Guard can relax at places you save (like home) and tighten everywhere else. Your location never leaves this Mac.";
 				INFOPLIST_KEY_NSRemindersUsageDescription = "This app uses Reminders to display your scheduled reminder in the calendar";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1444,6 +1446,8 @@
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses the calendar to display your calendar events";
 				INFOPLIST_KEY_NSCameraUsageDescription = "NotchNerd uses the camera for the webcam mirror and, if you turn on Guard, to check for your face while you are idle. Guard never saves frames unless someone else is at your Mac.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "NotchNerd Guard can relax at places you save (like home) and tighten everywhere else. Your location never leaves this Mac.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "NotchNerd Guard can relax at places you save (like home) and tighten everywhere else. Your location never leaves this Mac.";
 				INFOPLIST_KEY_NSRemindersUsageDescription = "This app uses Reminders to display your scheduled reminder in the calendar";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1557,7 +1561,7 @@
 			repositoryURL = "https://github.com/mkbuilds4/presence-lock.git";
 			requirement = {
 				kind = revision;
-				revision = 9c687d0290d6112f2a4a9e71e84492ebb7b5b447;
+				revision = f5c6aa80057d49bcfc1acf3889707604b924a2b2;
 			};
 		};
 		9A987A0E2C73CA8D005CA465 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
