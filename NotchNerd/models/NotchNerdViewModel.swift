@@ -191,7 +191,11 @@ class NotchNerdViewModel: NSObject, ObservableObject {
 
     /// The open height depends on the tab — the Agent tab is taller (see matters.swift).
     func openSize(for view: NotchViews) -> CGSize {
-        view == .agent ? agentNotchSize : openNotchSize
+        switch view {
+        case .agent: return agentNotchSize
+        case .guardian: return MainActor.assumeIsolated { GuardNotchModel.shared.size }
+        default: return openNotchSize
+        }
     }
 
     func open() {
@@ -205,6 +209,10 @@ class NotchNerdViewModel: NSObject, ObservableObject {
     func close() {
         // Do not close while a share picker or sharing service is active
         if SharingStateManager.shared.preventNotchClose {
+            return
+        }
+        // Guard's HUD / enrollment stays up until Guard takes it down (hover-out can't dismiss it).
+        if coordinator.currentView == .guardian && MainActor.assumeIsolated({ GuardNotchModel.shared.presentation != nil }) {
             return
         }
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)
