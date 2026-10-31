@@ -192,6 +192,9 @@ extension Defaults.Keys {
     // Show or hide the title bar
     static let hideTitleBar = Key<Bool>("hideTitleBar", default: true)
 
+    // MARK: Guard (walk-away protection via PresenceKit; its own tuned settings live in PresenceKit's Config)
+    static let guardEnabled = Key<Bool>("guardEnabled", default: false)
+
     // MARK: Agent (Claude Code session monitor — NotchNerd)
     static let agentEnabled = Key<Bool>("agentEnabled", default: false)
     static let agentPanelEnabled = Key<Bool>("agentPanelEnabled", default: true)

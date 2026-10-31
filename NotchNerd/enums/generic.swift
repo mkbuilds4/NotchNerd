@@ -29,6 +29,8 @@ public enum NotchViews {
     case shelf
     case agent
     case notepad
+    /// Guard's Face ID HUD and face enrollment (not a tab; PresenceKit opens it).
+    case guardian
 }
 
 enum SettingsEnum {

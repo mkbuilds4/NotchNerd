@@ -54,6 +54,9 @@ struct SettingsView: View {
                 NavigationLink(value: "Agent") {
                     Label("Agent", systemImage: "sparkles")
                 }
+                NavigationLink(value: "Guard") {
+                    Label("Guard", systemImage: "faceid")
+                }
                 NavigationLink(value: "Shortcuts") {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
@@ -90,6 +93,8 @@ struct SettingsView: View {
                     Shelf()
                 case "Agent":
                     AgentSettings()
+                case "Guard":
+                    GuardSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Extensions":

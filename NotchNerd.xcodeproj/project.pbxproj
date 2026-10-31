@@ -75,6 +75,7 @@
 		11F748822ECB07A400F841DB /* MusicControlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F748812ECB07A400F841DB /* MusicControlButton.swift */; };
 		11F748842ECB27DC00F841DB /* MusicSlotConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F748832ECB27DC00F841DB /* MusicSlotConfigurationView.swift */; };
 		137233D3D59A4396E8A71FB8 /* NotepadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EBBF33B3096E613DD622035 /* NotepadView.swift */; };
+		13A47C22AEAC52C15E31B45A /* GuardModelInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1386AD6430E1061362317985 /* GuardModelInstaller.swift */; };
 		14288DDC2C6E015000B9F80C /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14288DD62C6E015000B9F80C /* AudioPlayer.swift */; };
 		14288DE82C6E01C800B9F80C /* ProgressIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14288DE72C6E01C800B9F80C /* ProgressIndicator.swift */; };
 		14288E0C2C6F8EC000B9F80C /* AppIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14288E0B2C6F8EC000B9F80C /* AppIcons.swift */; };
@@ -115,8 +116,10 @@
 		5917FD112E57891600E87F1C /* MediaKeyInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5917FD102E57891600E87F1C /* MediaKeyInterceptor.swift */; };
 		5955950D2E900ED800C66711 /* ApplicationRelauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5955950C2E900ED800C66711 /* ApplicationRelauncher.swift */; };
 		59D8C23C2E589FAA00147B33 /* VolumeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D8C23B2E589FAA00147B33 /* VolumeManager.swift */; };
+		5C49EFEB7BAC4EC0FE3BF7EB /* PresenceKit in Frameworks */ = {isa = PBXBuildFile; productRef = A359997A6035D2A0B13AFF57 /* PresenceKit */; };
 		615EC13A975ECB423A5E5329 /* AgentBridgeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6DBF7837B002A75F1DC3B59 /* AgentBridgeManager.swift */; };
 		643DEBDC400E040846AA790F /* GhosttyJumpService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A1335325669BA8E6668AF6 /* GhosttyJumpService.swift */; };
+		6DA49B12392C431768D9ABAE /* GuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48D61C7D09BB55EFF9A14366 /* GuardManager.swift */; };
 		7EEC3E1B342E615D114DB510 /* ActiveAgentProcessDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97687D279D6BE8D0D56E122 /* ActiveAgentProcessDiscovery.swift */; };
 		92AFD0C0E17DB24E008AB87F /* NotepadWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58F360FDFA959505E7FF140 /* NotepadWindowController.swift */; };
 		9A0887322C7A693000C160EA /* TabButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A0887312C7A693000C160EA /* TabButton.swift */; };
@@ -155,7 +158,10 @@
 		B1FEB4992C7686630066EBBC /* PanGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1FEB4982C7686630066EBBC /* PanGesture.swift */; };
 		D4B34A341EAAC48470D3C113 /* TerminalAppJumpService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6119E109AC81B2ADF43B8ABC /* TerminalAppJumpService.swift */; };
 		D5287D99FDCD8AC32A17E88D /* AgentUsageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A629446A5E38FC2A7B34B2F /* AgentUsageManager.swift */; };
+		DCA46951C6423E52E3BE592A /* GuardNotchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9AEDD4EA32F691E2B884A9 /* GuardNotchView.swift */; };
 		E3E7E0A839C22FA4C78209C2 /* OpenIslandCore in Frameworks */ = {isa = PBXBuildFile; productRef = B11E5C1F3836AF0C941BEAD6 /* OpenIslandCore */; };
+		EDA62D02FE48BF8376B63BD4 /* GuardSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98496D662ABDCD2D31DD0A7 /* GuardSettings.swift */; };
+		EFA39E599B48FFFA649CAD6B /* GuardModelConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB5EA57BE5DBF5582C0E9FB /* GuardModelConverter.swift */; };
 		F38DE6482D8243E7008B5C6D /* BatteryActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */; };
 		F67E0F125E8F8903F98EC9A1 /* AgentNotificationSound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603CCB82C090912E8305411C /* AgentNotificationSound.swift */; };
 		FF11EDF9050DB4E6A7FEBA39 /* AgentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6D0FD510B346C0ABAC10B21 /* AgentView.swift */; };
@@ -257,6 +263,7 @@
 		11F748662EC9AC9600F841DB /* XPCHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCHelperClient.swift; sourceTree = "<group>"; };
 		11F748812ECB07A400F841DB /* MusicControlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicControlButton.swift; sourceTree = "<group>"; };
 		11F748832ECB27DC00F841DB /* MusicSlotConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicSlotConfigurationView.swift; sourceTree = "<group>"; };
+		1386AD6430E1061362317985 /* GuardModelInstaller.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuardModelInstaller.swift; sourceTree = "<group>"; };
 		14288DD62C6E015000B9F80C /* AudioPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		14288DE72C6E01C800B9F80C /* ProgressIndicator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProgressIndicator.swift; sourceTree = "<group>"; };
 		14288E0B2C6F8EC000B9F80C /* AppIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIcons.swift; sourceTree = "<group>"; };
@@ -294,6 +301,8 @@
 		14FC6E4F2C7DED5600C7BEA5 /* DataTypes+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DataTypes+Extensions.swift"; sourceTree = "<group>"; };
 		2EBBF33B3096E613DD622035 /* NotepadView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotepadView.swift; sourceTree = "<group>"; };
 		3EEBC596B4CF86F9AC0FFA7E /* NotepadTabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotepadTabView.swift; sourceTree = "<group>"; };
+		48D61C7D09BB55EFF9A14366 /* GuardManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuardManager.swift; sourceTree = "<group>"; };
+		4F9AEDD4EA32F691E2B884A9 /* GuardNotchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuardNotchView.swift; sourceTree = "<group>"; };
 		507266DA2C908E2E00A2D00D /* HoverButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverButton.swift; sourceTree = "<group>"; };
 		5917FD102E57891600E87F1C /* MediaKeyInterceptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaKeyInterceptor.swift; sourceTree = "<group>"; };
 		5955950C2E900ED800C66711 /* ApplicationRelauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationRelauncher.swift; sourceTree = "<group>"; };
@@ -309,6 +318,7 @@
 		9A987A032C73CA66005CA465 /* ShelfView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShelfView.swift; sourceTree = "<group>"; };
 		9AB0C6BB2C73C9CB00F7CD30 /* NotchHomeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotchHomeView.swift; sourceTree = "<group>"; };
 		9EA51FAE2D3E577A2639854B /* NotepadPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotepadPanel.swift; sourceTree = "<group>"; };
+		ACB5EA57BE5DBF5582C0E9FB /* GuardModelConverter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuardModelConverter.swift; sourceTree = "<group>"; };
 		B10348D82C74E56000475897 /* ConditionalModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionalModifier.swift; sourceTree = "<group>"; };
 		B10F84A22C6C9596009F3026 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
 		B141C2402CA5F53E00AC8CC8 /* SparkleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleView.swift; sourceTree = "<group>"; };
@@ -337,6 +347,7 @@
 		C58F360FDFA959505E7FF140 /* NotepadWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotepadWindowController.swift; sourceTree = "<group>"; };
 		C9DB0DB877CB83B59501DD04 /* NotesStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
 		D40B3ECF7F69F23BD607D5A5 /* AgentSessionDetails.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentSessionDetails.swift; sourceTree = "<group>"; };
+		D98496D662ABDCD2D31DD0A7 /* GuardSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuardSettings.swift; sourceTree = "<group>"; };
 		E6DBF7837B002A75F1DC3B59 /* AgentBridgeManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentBridgeManager.swift; sourceTree = "<group>"; };
 		E97687D279D6BE8D0D56E122 /* ActiveAgentProcessDiscovery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActiveAgentProcessDiscovery.swift; sourceTree = "<group>"; };
 		F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryActivityManager.swift; sourceTree = "<group>"; };
@@ -404,6 +415,7 @@
 				111BE95D2ECD71E10079DD4E /* AsyncXPCConnection in Frameworks */,
 				B1628B922CC260C0003D8DF3 /* SwiftUIIntrospect in Frameworks */,
 				E3E7E0A839C22FA4C78209C2 /* OpenIslandCore in Frameworks */,
+				5C49EFEB7BAC4EC0FE3BF7EB /* PresenceKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,6 +651,7 @@
 				11CC44A12CEE614100C7244B /* NotchNerdViewCoordinator.swift */,
 				C0883F44AB4FEE2309C4F61D /* Agent */,
 				C2A04E0A971E79551C2F789E /* Notepad */,
+				378F63A9C7DE3599FE3CBE7C /* Guard */,
 			);
 			path = NotchNerd;
 			sourceTree = "<group>";
@@ -691,6 +704,19 @@
 				1153BD902D986DB300979FB0 /* PlaybackState.swift */,
 			);
 			path = models;
+			sourceTree = "<group>";
+		};
+		378F63A9C7DE3599FE3CBE7C /* Guard */ = {
+			isa = PBXGroup;
+			children = (
+				48D61C7D09BB55EFF9A14366 /* GuardManager.swift */,
+				ACB5EA57BE5DBF5582C0E9FB /* GuardModelConverter.swift */,
+				1386AD6430E1061362317985 /* GuardModelInstaller.swift */,
+				4F9AEDD4EA32F691E2B884A9 /* GuardNotchView.swift */,
+				D98496D662ABDCD2D31DD0A7 /* GuardSettings.swift */,
+			);
+			name = Guard;
+			path = Guard;
 			sourceTree = "<group>";
 		};
 		9A0887332C7AFF7E00C160EA /* Tabs */ = {
@@ -900,6 +926,7 @@
 				111BEA5E2ED07A340079DD4E /* MacroVisionKit */,
 				111BEA6E2ED166E20079DD4E /* MacroVisionKit */,
 				B11E5C1F3836AF0C941BEAD6 /* OpenIslandCore */,
+				A359997A6035D2A0B13AFF57 /* PresenceKit */,
 			);
 			productName = NotchNerd;
 			productReference = 14CEF4122C5CAED300855D72 /* NotchNerd.app */;
@@ -946,6 +973,7 @@
 				111BE95B2ECD71E10079DD4E /* XCRemoteSwiftPackageReference "AsyncXPCConnection" */,
 				111BEA6D2ED166E20079DD4E /* XCRemoteSwiftPackageReference "MacroVisionKit" */,
 				6209AB78ED825F067AA96BA2 /* XCLocalSwiftPackageReference "OpenIslandEngine" */,
+				080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */,
 			);
 			productRefGroup = 14CEF4132C5CAED300855D72 /* Products */;
 			projectDirPath = "";
@@ -1143,6 +1171,11 @@
 				D5287D99FDCD8AC32A17E88D /* AgentUsageManager.swift in Sources */,
 				53CC753A8452134CF905FCBE /* UsageChip.swift in Sources */,
 				D4B34A341EAAC48470D3C113 /* TerminalAppJumpService.swift in Sources */,
+				6DA49B12392C431768D9ABAE /* GuardManager.swift in Sources */,
+				EFA39E599B48FFFA649CAD6B /* GuardModelConverter.swift in Sources */,
+				13A47C22AEAC52C15E31B45A /* GuardModelInstaller.swift in Sources */,
+				DCA46951C6423E52E3BE592A /* GuardNotchView.swift in Sources */,
+				EDA62D02FE48BF8376B63BD4 /* GuardSettings.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1361,9 +1394,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSBackgroundOnly = NO;
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchNerd uses AppleEvents to control music players and to focus your terminal or IDE when you jump to a Claude Code session";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchNerd uses AppleEvents to control music players, to focus your terminal or IDE when you jump to a Claude Code session, and to send Guard intruder alerts through Messages";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses the calendar to display your calendar events";
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to display a live camera view";
+				INFOPLIST_KEY_NSCameraUsageDescription = "NotchNerd uses the camera for the webcam mirror and, if you turn on Guard, to check for your face while you are idle. Guard never saves frames unless someone else is at your Mac.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSRemindersUsageDescription = "This app uses Reminders to display your scheduled reminder in the calendar";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1415,9 +1448,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSBackgroundOnly = NO;
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchNerd uses AppleEvents to control music players and to focus your terminal or IDE when you jump to a Claude Code session";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchNerd uses AppleEvents to control music players, to focus your terminal or IDE when you jump to a Claude Code session, and to send Guard intruder alerts through Messages";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses the calendar to display your calendar events";
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to display a live camera view";
+				INFOPLIST_KEY_NSCameraUsageDescription = "NotchNerd uses the camera for the webcam mirror and, if you turn on Guard, to check for your face while you are idle. Guard never saves frames unless someone else is at your Mac.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSRemindersUsageDescription = "This app uses Reminders to display your scheduled reminder in the calendar";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1472,6 +1505,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../presence-lock";
+		};
 		6209AB78ED825F067AA96BA2 /* XCLocalSwiftPackageReference "OpenIslandEngine" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Vendor/OpenIslandEngine;
@@ -1612,6 +1649,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A987A0E2C73CA8D005CA465 /* XCRemoteSwiftPackageReference "swift-collections" */;
 			productName = Collections;
+		};
+		A359997A6035D2A0B13AFF57 /* PresenceKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */;
+			productName = PresenceKit;
 		};
 		B11E5C1F3836AF0C941BEAD6 /* OpenIslandCore */ = {
 			isa = XCSwiftPackageProductDependency;
