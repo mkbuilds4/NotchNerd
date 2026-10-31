@@ -337,13 +337,13 @@ own `Config`). NotchNerd owns, in `NotchNerd/Guard/`:
   (`willPowerOffNotification`). A force quit (Activity Monitor, `kill -9`) can't be intercepted.
 - `GuardSettings` - Settings → Guard: model download, camera, face enrollment, optional face unlock
   (password + Accessibility) and iMessage alert number.
-- `GuardModelInstaller` + `GuardModelConverter` - the face model is **never bundled** (InsightFace's
-  pretrained weights are non-commercial research only). First run range-fetches just `w600k_mbf.onnx`
-  (13 MB) out of InsightFace's `buffalo_s.zip` release, checks its SHA-256, and converts it to a Core ML
-  NeuralNetwork spec in pure Swift, compiled on device. Verified cosine 1.0000 vs onnxruntime. Moving
-  into PresenceKit as `ModelInstaller`; NotchNerd's copy goes once that lands.
+- Face model, **never bundled** (InsightFace's pretrained weights are non-commercial research only):
+  Settings calls `PresenceGuard.installModel()`, which range-fetches just `w600k_mbf.onnx` (13 MB) from
+  InsightFace's `buffalo_s.zip` release, checks its SHA-256, and converts it to Core ML on device
+  (PresenceKit's `ModelInstaller`/`ModelConverter`, first written on this branch).
 - `GuardNotchView` - the Face ID HUD and enrollment ring as the `.guardian` notch view (not a tab).
-  `GuardNotchModel` takes over the notch even when open (security UI), only on the camera's display,
+  `GuardNotchModel` is PresenceKit's `GuardPresenter` (so PresenceKit's own notch panel never opens). The
+  live check's head-turn prompts ("Turn your head left", "Look up") get a direction arrow. It takes over the notch even when open (security UI), only on the camera's display,
   blocks hover-close while up, and restores the previous tab after. With face unlock on, the notch
   windows stay on the lock screen (SkyLight) so the HUD has a home there. Debug builds:
   `-guardNotchDemo YES` plays every state without a camera.

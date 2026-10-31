@@ -10,16 +10,18 @@
 import AVFoundation
 import Combine
 import Defaults
+import PresenceKit
 import SwiftUI
 
-final class GuardNotchModel: ObservableObject {
+/// PresenceKit's presenter: Guard's HUD and face setup draw here instead of in PresenceKit's own panel.
+@MainActor
+final class GuardNotchModel: ObservableObject, GuardPresenter {
     static let shared = GuardNotchModel()
 
-    enum HUD: Equatable { case scanning(String), success(String), failure(String) }
     enum Presentation: Equatable { case hud, enroll }
 
     @Published private(set) var presentation: Presentation?
-    @Published private(set) var hud: HUD = .scanning("")
+    @Published private(set) var hud: HUDState = .scanning("")
     /// Bumped on every HUD change so the glyph's bounce/shake replays.
     @Published private(set) var hudTick = 0
 
@@ -28,8 +30,9 @@ final class GuardNotchModel: ObservableObject {
     @Published private(set) var prompt = "Look straight at the camera"
     /// Eight directions, 0 = up, clockwise; each 0...1.
     @Published private(set) var sectorFill = [Double](repeating: 0, count: 8)
+    /// The straight-on samples taken before the head tilts, 0...1.
+    @Published private(set) var centerProgress: Double = 0
     @Published private(set) var enrollDone = false
-    var onCancelEnrollment: (() -> Void)?
 
     private var hideWork: DispatchWorkItem?
 
@@ -46,68 +49,56 @@ final class GuardNotchModel: ObservableObject {
 
     // MARK: HUD
 
-    func showHUD(_ state: HUD) {
-        onMain { [self] in
-            hideWork?.cancel()
-            hud = state
-            hudTick += 1
-            if presentation != .enroll { presentation = .hud }
-        }
+    func showHUD(_ state: HUDState) {
+        hideWork?.cancel()
+        hud = state
+        hudTick += 1
+        if presentation != .enroll { presentation = .hud }
     }
 
-    func hideHUD(after delay: Double = 0) {
-        onMain { [self] in
-            hideWork?.cancel()
-            let work = DispatchWorkItem { [weak self] in
-                guard let self, presentation == .hud else { return }
-                presentation = nil
-            }
-            hideWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    func hideHUD(after delay: Double) {
+        hideWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, presentation == .hud else { return }
+            presentation = nil
         }
+        hideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
     // MARK: enrollment
 
     func enrollmentBegan(session: AVCaptureSession) {
-        onMain { [self] in
-            hideWork?.cancel()
-            self.session = session
-            prompt = "Look straight at the camera"
-            sectorFill = .init(repeating: 0, count: 8)
-            enrollDone = false
-            presentation = .enroll
-        }
+        hideWork?.cancel()
+        self.session = session
+        prompt = "Look straight at the camera"
+        sectorFill = .init(repeating: 0, count: 8)
+        centerProgress = 0
+        enrollDone = false
+        presentation = .enroll
     }
 
-    func enrollmentUpdated(prompt: String, sectorFill: [Double]) {
-        onMain { [self] in
-            self.prompt = prompt
-            if sectorFill.count == 8 { self.sectorFill = sectorFill }
-        }
+    func enrollmentUpdated(prompt: String, sectorFill: [Double], centerProgress: Double) {
+        self.prompt = prompt
+        if sectorFill.count == 8 { self.sectorFill = sectorFill }
+        self.centerProgress = centerProgress
     }
 
     func enrollmentEnded(ok: Bool, message: String) {
-        onMain { [self] in
-            prompt = message
-            enrollDone = ok
-            if ok { sectorFill = .init(repeating: 1, count: 8) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
-                guard let self, presentation == .enroll else { return }
-                presentation = nil
-                session = nil
-            }
+        prompt = message
+        enrollDone = ok
+        if ok { sectorFill = .init(repeating: 1, count: 8); centerProgress = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + (ok ? 1.6 : 2.4)) { [weak self] in
+            guard let self, presentation == .enroll else { return }
+            presentation = nil
+            session = nil
         }
     }
 
     func cancelEnrollment() {
-        onCancelEnrollment?()
+        PresenceGuard.shared.cancelEnrollment()
         presentation = nil
         session = nil
-    }
-
-    private func onMain(_ body: @escaping () -> Void) {
-        if Thread.isMainThread { body() } else { DispatchQueue.main.async(execute: body) }
     }
 }
 
@@ -132,18 +123,38 @@ private struct GuardHUDView: View {
     private var tint: Color {
         switch model.hud { case .scanning: return .white; case .success: return .green; case .failure: return .red }
     }
+    /// The live check asks for a random head turn ("Turn your head left", "Look up"); point the way.
+    private var challengeArrow: String? {
+        guard case .scanning(let t) = model.hud else { return nil }
+        let words = Set(t.lowercased().split(separator: " ").map(String.init))
+        for (word, arrow) in [("left", "arrow.left"), ("right", "arrow.right"), ("up", "arrow.up"), ("down", "arrow.down")] where words.contains(word) {
+            return arrow
+        }
+        return nil
+    }
 
     var body: some View {
         VStack(spacing: 14) {
-            glyph
-                .font(.system(size: 58, weight: .light))
-                .foregroundStyle(tint)
-                .offset(x: shake)
-                .frame(width: 76, height: 76)
+            HStack(spacing: 14) {
+                glyph
+                    .font(.system(size: 58, weight: .light))
+                    .foregroundStyle(tint)
+                    .offset(x: shake)
+                    .frame(width: 76, height: 76)
+                if let arrow = challengeArrow {
+                    Image(systemName: arrow)
+                        .font(.system(size: 30, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.pulse, options: .repeating)
+                        .transition(.opacity.combined(with: .scale))
+                }
+            }
+            .animation(.smooth(duration: 0.25), value: challengeArrow)
             Text(text)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.75))
+                .font(.system(size: challengeArrow == nil ? 13 : 16, weight: challengeArrow == nil ? .medium : .semibold))
+                .foregroundStyle(.white.opacity(challengeArrow == nil ? 0.75 : 1))
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(width: GuardNotchModel.hudSize.width - 40)
         .padding(.top, 4)
@@ -205,6 +216,11 @@ private struct GuardEnrollView: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(width: 280, alignment: .leading)
+                if model.centerProgress < 1 && !model.enrollDone {
+                    ProgressView(value: model.centerProgress)
+                        .tint(.green)
+                        .frame(width: 180)
+                }
                 if !model.enrollDone {
                     Button("Cancel") { model.cancelEnrollment() }
                         .buttonStyle(.plain)

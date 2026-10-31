@@ -193,7 +193,7 @@ class NotchNerdViewModel: NSObject, ObservableObject {
     func openSize(for view: NotchViews) -> CGSize {
         switch view {
         case .agent: return agentNotchSize
-        case .guardian: return GuardNotchModel.shared.size
+        case .guardian: return MainActor.assumeIsolated { GuardNotchModel.shared.size }
         default: return openNotchSize
         }
     }
@@ -212,7 +212,7 @@ class NotchNerdViewModel: NSObject, ObservableObject {
             return
         }
         // Guard's HUD / enrollment stays up until Guard takes it down (hover-out can't dismiss it).
-        if coordinator.currentView == .guardian && GuardNotchModel.shared.presentation != nil {
+        if coordinator.currentView == .guardian && MainActor.assumeIsolated({ GuardNotchModel.shared.presentation != nil }) {
             return
         }
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)

@@ -35,6 +35,7 @@ final class GuardManager: ObservableObject {
 
     private init() {
         engine.onEvent = { [weak self] event in self?.handle(event) }
+        engine.presenter = GuardNotchModel.shared // HUD and face setup draw in NotchNerd's notch
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.willPowerOffNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.quitApproved = true }
         }
@@ -108,8 +109,7 @@ final class GuardManager: ObservableObject {
         guard modelState != .ready else { return }
         modelState = .installing(0)
         do {
-            let dest = Paths.support.appendingPathComponent("FaceEmbedder.mlmodelc")
-            try await GuardModelInstaller.install(to: dest) { p in
+            try await engine.installModel { p in
                 Task { @MainActor in
                     if case .installing = GuardManager.shared.modelState { GuardManager.shared.modelState = .installing(p) }
                 }
@@ -176,15 +176,18 @@ final class GuardManager: ObservableObject {
         let n = GuardNotchModel.shared
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(2))
-            n.showHUD(.scanning("Looking for you")); try? await Task.sleep(for: .seconds(2.5))
+            n.showHUD(.scanning("Looking for you")); try? await Task.sleep(for: .seconds(2))
+            n.showHUD(.scanning("Turn your head left")); try? await Task.sleep(for: .seconds(1.5))
+            n.showHUD(.scanning("Look up")); try? await Task.sleep(for: .seconds(1.5))
             n.showHUD(.success("Welcome back")); try? await Task.sleep(for: .seconds(1.5))
             n.showHUD(.failure("Not a real face")); try? await Task.sleep(for: .seconds(1.5))
-            n.hideHUD(); try? await Task.sleep(for: .seconds(1.5))
+            n.hideHUD(after: 0); try? await Task.sleep(for: .seconds(1.5))
             n.enrollmentBegan(session: AVCaptureSession())
             var fill = [Double](repeating: 0, count: 8)
+            for k in 1...10 { try? await Task.sleep(for: .milliseconds(150)); n.enrollmentUpdated(prompt: "Look straight at the camera", sectorFill: fill, centerProgress: Double(k) / 10) }
             for s in 0..<8 {
-                n.enrollmentUpdated(prompt: "Tilt your head to the \(["up", "top right", "right", "bottom right", "down", "bottom left", "left", "top left"][s])", sectorFill: fill)
-                for k in 1...4 { try? await Task.sleep(for: .milliseconds(250)); fill[s] = Double(k) / 4; n.enrollmentUpdated(prompt: n.prompt, sectorFill: fill) }
+                n.enrollmentUpdated(prompt: "Tilt your head to the \(["up", "top right", "right", "bottom right", "down", "bottom left", "left", "top left"][s])", sectorFill: fill, centerProgress: 1)
+                for k in 1...4 { try? await Task.sleep(for: .milliseconds(250)); fill[s] = Double(k) / 4; n.enrollmentUpdated(prompt: n.prompt, sectorFill: fill, centerProgress: 1) }
             }
             n.enrollmentEnded(ok: true, message: "Face set up")
         }
