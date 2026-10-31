@@ -1,14 +1,15 @@
 #!/usr/bin/env ruby
 # Adds NotchNerd/Guard/*.swift to a Guard PBXGroup + the app target's Sources phase, and links the
-# PresenceKit package (local path, ../presence-lock relative to the repo by default). Idempotent.
+# PresenceKit package from GitHub pinned to a commit. Idempotent; pass a new commit to re-pin.
 #
 # Usage (from repo root):
-#   ruby tooling/scripts/add_guard_files.rb [path/to/presence-lock]
+#   ruby tooling/scripts/add_guard_files.rb [presence-lock commit]
 require "xcodeproj"
 
 PROJECT     = File.expand_path("NotchNerd.xcodeproj", Dir.pwd)
 TARGET_NAME = "NotchNerd"
-PKG_PATH    = ARGV[0] || "../presence-lock"
+PKG_URL     = "https://github.com/mkbuilds4/presence-lock.git"
+PKG_REV     = ARGV[0] || "9c687d0290d6112f2a4a9e71e84492ebb7b5b447"
 
 project = Xcodeproj::Project.open(PROJECT)
 target  = project.targets.find { |t| t.name == TARGET_NAME } or abort "target #{TARGET_NAME} not found"
@@ -22,13 +23,14 @@ Dir.glob(File.join(File.dirname(PROJECT), "NotchNerd/Guard/*.swift")).sort.each 
   puts "guard file: #{name}"
 end
 
-pkg = project.root_object.package_references.find { |p| p.respond_to?(:relative_path) && p.relative_path == PKG_PATH }
+pkg = project.root_object.package_references.find { |p| p.respond_to?(:repositoryURL) && p.repositoryURL == PKG_URL }
 unless pkg
-  pkg = project.new(Xcodeproj::Project::Object::XCLocalSwiftPackageReference)
-  pkg.relative_path = PKG_PATH
+  pkg = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+  pkg.repositoryURL = PKG_URL
   project.root_object.package_references << pkg
-  puts "added local package #{PKG_PATH}"
+  puts "added package #{PKG_URL}"
 end
+pkg.requirement = { "kind" => "revision", "revision" => PKG_REV }
 unless target.package_product_dependencies.any? { |d| d.product_name == "PresenceKit" }
   dep = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
   dep.product_name = "PresenceKit"

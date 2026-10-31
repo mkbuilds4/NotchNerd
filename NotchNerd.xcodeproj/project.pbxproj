@@ -967,7 +967,7 @@
 				111BE95B2ECD71E10079DD4E /* XCRemoteSwiftPackageReference "AsyncXPCConnection" */,
 				111BEA6D2ED166E20079DD4E /* XCRemoteSwiftPackageReference "MacroVisionKit" */,
 				6209AB78ED825F067AA96BA2 /* XCLocalSwiftPackageReference "OpenIslandEngine" */,
-				080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */,
+				17969B887E3C34FF6F12C3CF /* XCRemoteSwiftPackageReference "presence-lock" */,
 			);
 			productRefGroup = 14CEF4132C5CAED300855D72 /* Products */;
 			projectDirPath = "";
@@ -1497,10 +1497,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../presence-lock";
-		};
 		6209AB78ED825F067AA96BA2 /* XCLocalSwiftPackageReference "OpenIslandEngine" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Vendor/OpenIslandEngine;
@@ -1554,6 +1550,14 @@
 			requirement = {
 				kind = exactVersion;
 				version = 2.9.1;
+			};
+		};
+		17969B887E3C34FF6F12C3CF /* XCRemoteSwiftPackageReference "presence-lock" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mkbuilds4/presence-lock.git";
+			requirement = {
+				kind = revision;
+				revision = 9c687d0290d6112f2a4a9e71e84492ebb7b5b447;
 			};
 		};
 		9A987A0E2C73CA8D005CA465 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
@@ -1644,7 +1648,7 @@
 		};
 		A359997A6035D2A0B13AFF57 /* PresenceKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 080E1E2B8E3C695231278036 /* XCLocalSwiftPackageReference "presence-lock" */;
+			package = 17969B887E3C34FF6F12C3CF /* XCRemoteSwiftPackageReference "presence-lock" */;
 			productName = PresenceKit;
 		};
 		B11E5C1F3836AF0C941BEAD6 /* OpenIslandCore */ = {
