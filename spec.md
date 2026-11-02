@@ -324,7 +324,7 @@ the last note auto-creates a new one (never empty). Assumes the app is unsandbox
 ### Guard (walk-away protection)
 
 Guard is NotchNerd's front end for **PresenceKit** (the engine of the standalone Presence Lock app,
-MIT), linked as a Swift package from `github.com/mkbuilds4/presence-lock` pinned to a commit
+MIT), linked as a Swift package from `github.com/mkbuilds4/notchguard` pinned to a commit
 (`tooling/scripts/add_guard_files.rb [commit]` adds the files and re-pins). That repo is private until
 launch, so CI needs a token with read access to resolve it. PresenceKit owns face matching (Vision + MobileFaceNet), liveness (by default
 a natural small head movement or blink; optional head-turn challenge; phone-outline check), places and
